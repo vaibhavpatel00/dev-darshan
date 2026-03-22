@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevDarshan — Sacred Temple Discovery & Booking</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --saffron: #E8520A;
+  --saffron-light: #FF7B35;
+  --saffron-pale: #FFF4EE;
+  --gold: #C49A2A;
+  --gold-light: #F0C040;
+  --gold-pale: #FFFBF0;
+  --maroon: #7B1C1C;
+  --maroon-light: #A52A2A;
+  --stone: #2A1A0E;
+  --stone-mid: #5C3D28;
+  --parchment: #FDF6EC;
+  --parchment-dark: #F5E8D4;
+  --text-primary: #1A0F08;
+  --text-secondary: #5C3D28;
+  --text-muted: #9B7B62;
+  --border: rgba(180, 120, 60, 0.18);
+  --border-strong: rgba(180, 120, 60, 0.35);
+  --surface: #FFFFFF;
+  --surface-tint: rgba(232,82,10,0.04);
+  --green-open: #1A7A4A;
+  --green-bg: #E6F5EE;
+  --red-closed: #C02020;
+  --red-bg: #FEECEC;
+  --amber-rush: #A05000;
+  --amber-bg: #FFF3E0;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 1px 4px rgba(120,60,20,0.08);
+  --shadow-md: 0 4px 20px rgba(120,60,20,0.12);
+  --shadow-lg: 0 12px 40px rgba(120,60,20,0.16);
+  --ff-display: 'Cormorant Garamond', serif;
+  --ff-body: 'DM Sans', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--ff-body);
+  background: var(--parchment);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(253,246,236,0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 64px;
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--ff-display); font-size: 24px; font-weight: 700;
+  color: var(--saffron); letter-spacing: 0.02em; text-decoration: none;
+  cursor: pointer;
+}
+.nav-brand-dot { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; }
+.nav-links { display: flex; align-items: center; gap: 8px; }
+.nav-link {
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  text-decoration: none; padding: 7px 14px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: all 0.2s; border: none; background: none;
+}
+.nav-link:hover { background: var(--surface-tint); color: var(--saffron); }
+.nav-link.active { color: var(--saffron); background: rgba(232,82,10,0.08); }
+.nav-btn {
+  background: var(--saffron); color: #fff; border: none; cursor: pointer;
+  padding: 8px 20px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600;
+  font-family: var(--ff-body); letter-spacing: 0.02em; transition: all 0.2s;
+}
+.nav-btn:hover { background: var(--maroon); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+/* ── PAGES ── */
+.page { display: none; padding-top: 64px; }
+.page.active { display: block; }
+
+/* ── HERO ── */
+.hero {
+  position: relative; min-height: 92vh;
+  background: linear-gradient(160deg, #1A0F08 0%, #3D1A08 40%, #5C2A10 70%, #7B3820 100%);
+  display: flex; align-items: center; overflow: hidden;
+}
+.hero-bg-pattern {
+  position: absolute; inset: 0; opacity: 0.06;
+  background-image: radial-gradient(circle at 2px 2px, #FFF4EE 1px, transparent 0);
+  background-size: 28px 28px;
+}
+.hero-glow {
+  position: absolute; top: -20%; left: -10%; width: 60%; height: 80%;
+  background: radial-gradient(ellipse, rgba(232,82,10,0.3) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-glow-2 {
+  position: absolute; bottom: -20%; right: -5%; width: 50%; height: 70%;
+  background: radial-gradient(ellipse, rgba(196,154,42,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-content {
+  position: relative; z-index: 2; width: 100%; max-width: 1400px;
+  margin: 0 auto; padding: 80px 60px 60px;
+}
+.hero-eyebrow {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--gold-light); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.hero-eyebrow::before {
+  content: ''; width: 28px; height: 1px; background: var(--gold-light);
+}
+.hero-title {
+  font-family: var(--ff-display); font-size: clamp(52px, 6vw, 88px);
+  font-weight: 600; color: #FDFAF5; line-height: 1.05;
+  letter-spacing: -0.02em; margin-bottom: 20px;
+}
+.hero-title em { font-style: italic; color: var(--gold-light); }
+.hero-subtitle {
+  font-size: 16px; color: rgba(253,246,236,0.65); line-height: 1.7;
+  max-width: 520px; margin-bottom: 44px; font-weight: 300;
+}
+.search-wrapper {
+  position: relative; max-width: 640px;
+}
+.search-input {
+  width: 100%; padding: 18px 60px 18px 52px;
+  background: rgba(253,246,236,0.95); border: 1.5px solid rgba(232,82,10,0.3);
+  border-radius: var(--radius-xl); font-size: 16px; font-family: var(--ff-body);
+  color: var(--text-primary); outline: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.9);
+  transition: all 0.25s;
+}
+.search-input:focus {
+  border-color: var(--saffron); box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 0 4px rgba(232,82,10,0.12);
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-icon {
+  position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; opacity: 0.5; pointer-events: none;
+}
+.search-btn {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: var(--saffron); border: none; cursor: pointer;
+  width: 42px; height: 42px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.search-btn:hover { background: var(--maroon); transform: translateY(-50%) scale(1.05); }
+.search-dropdown {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  overflow: hidden; display: none; z-index: 100;
+}
+.search-dropdown.show { display: block; }
+.search-result-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--border);
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--saffron-pale); }
+.search-result-img {
+  width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover;
+  flex-shrink: 0; background: var(--parchment-dark);
+}
+.search-result-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.search-result-loc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.search-result-badge {
+  margin-left: auto; font-size: 11px; font-weight: 600; padding: 3px 8px;
+  border-radius: 20px; flex-shrink: 0;
+}
+.badge-open { background: var(--green-bg); color: var(--green-open); }
+.badge-closed { background: var(--red-bg); color: var(--red-closed); }
+.badge-high { background: var(--amber-bg); color: var(--amber-rush); }
+
+.hero-stats {
+  display: flex; gap: 40px; margin-top: 56px;
+  padding-top: 40px; border-top: 1px solid rgba(253,246,236,0.12);
+}
+.hero-stat-num {
+  font-family: var(--ff-display); font-size: 36px; font-weight: 700; color: var(--gold-light);
+  line-height: 1;
+}
+.hero-stat-label { font-size: 12px; color: rgba(253,246,236,0.5); margin-top: 4px; font-weight: 400; }
+
+/* ── SPLIT SECTION ── */
+.split-section {
+  display: grid; grid-template-columns: 1fr 1fr;
+  min-height: 80vh; background: var(--parchment);
+}
+.split-map-side {
+  position: sticky; top: 64px; height: calc(100vh - 64px);
+  background: #E8E0D4;
+}
+#india-map { width: 100%; height: 100%; }
+.split-list-side { padding: 36px 40px; overflow-y: auto; }
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
+}
+.section-title {
+  font-family: var(--ff-display); font-size: 28px; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -0.01em;
+}
+.section-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+/* ── CATEGORY TABS ── */
+.cat-tabs {
+  display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.cat-tab {
+  padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  border: 1.5px solid var(--border); background: var(--surface);
+  cursor: pointer; transition: all 0.2s; color: var(--text-secondary);
+  white-space: nowrap;
+}
+.cat-tab:hover { border-color: var(--saffron); color: var(--saffron); }
+.cat-tab.active { background: var(--saffron); color: #fff; border-color: var(--saffron); }
+
+/* ── TEMPLE CARDS (compact grid) ── */
+.temples-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 14px; padding-bottom: 32px;
+}
+.temple-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden; cursor: pointer;
+  transition: all 0.25s; box-shadow: var(--shadow-sm);
+}
+.temple-card:hover {
+  border-color: rgba(232,82,10,0.35); box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.temple-card-img {
+  width: 100%; height: 120px; object-fit: cover; display: block;
+  background: var(--parchment-dark);
+}
+.temple-card-body { padding: 12px 14px 14px; }
+.temple-card-name {
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+  line-height: 1.3; margin-bottom: 4px;
+}
+.temple-card-loc { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.temple-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.status-pill {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 20px;
+  letter-spacing: 0.03em; text-transform: uppercase;
+}
+.status-pill .dot {
+  width: 5px; height: 5px; border-radius: 50%; animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+.pill-open { background: var(--green-bg); color: var(--green-open); }
+.pill-open .dot { background: var(--green-open); }
+.pill-closed { background: var(--red-bg); color: var(--red-closed); }
+.pill-closed .dot { background: var(--red-closed); }
+.rush-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+}
+.rush-low { background: var(--green-bg); color: var(--green-open); }
+.rush-medium { background: var(--amber-bg); color: var(--amber-rush); }
+.rush-high { background: var(--red-bg); color: var(--red-closed); }
+.temple-card-price {
+  font-size: 11px; color: var(--text-muted); margin-top: 4px;
+}
+.temple-card-price strong { color: var(--saffron); font-weight: 700; }
+
+/* ── FEATURED STRIP ── */
+.featured-strip {
+  background: var(--stone); padding: 32px 60px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.featured-strip-title {
+  font-family: var(--ff-display); font-size: 18px; font-weight: 600;
+  color: var(--gold-light); margin-bottom: 20px; letter-spacing: 0.03em;
+}
+.featured-scroll { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+.featured-scroll::-webkit-scrollbar { height: 3px; }
+.featured-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+.featured-scroll::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+.featured-chip {
+  flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-xl); padding: 8px 14px 8px 8px; cursor: pointer;
+  transition: all 0.2s; min-width: 200px;
+}
+.featured-chip:hover { background: rgba(232,82,10,0.2); border-color: rgba(232,82,10,0.4); }
+.featured-chip-img {
+  width: 40px; height: 40px; border-radius: 20px; object-fit: cover;
+  flex-shrink: 0; background: rgba(255,255,255,0.1);
+}
+.featured-chip-name { font-size: 13px; font-weight: 600; color: #FDF6EC; line-height: 1.2; }
+.featured-chip-state { font-size: 11px; color: rgba(253,246,236,0.5); }
+.live-dot {
+  width: 6px; height: 6px; background: #4ADE80; border-radius: 50%;
+  animation: pulse-dot 1.5s infinite; margin-left: auto; flex-shrink: 0;
+}
+
+/* ── TEMPLE DETAIL PAGE ── */
+.detail-hero {
+  position: relative; height: 380px;
+  background: linear-gradient(180deg, #1A0F08 0%, #3D1A08 100%);
+  overflow: hidden;
+}
+.detail-hero-img {
+  width: 100%; height: 100%; object-fit: cover; opacity: 0.55;
+  display: block;
+}
+.detail-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(26,15,8,0.95) 0%, rgba(26,15,8,0.2) 60%, transparent 100%);
+}
+.detail-hero-content {
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 32px 60px;
+}
+.detail-category {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--gold-light); margin-bottom: 10px;
+}
+.detail-name {
+  font-family: var(--ff-display); font-size: clamp(36px, 4vw, 52px);
+  font-weight: 700; color: #FDF6EC; line-height: 1.1; margin-bottom: 8px;
+}
+.detail-location { font-size: 14px; color: rgba(253,246,236,0.6); display: flex; align-items: center; gap: 6px; }
+
+.detail-body {
+  max-width: 1200px; margin: 0 auto; padding: 36px 60px;
+  display: grid; grid-template-columns: 1fr 340px; gap: 32px;
+}
+.detail-main { display: flex; flex-direction: column; gap: 24px; }
+
+.info-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.info-card-title {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 16px;
+}
+
+/* Status bar */
+.status-bar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.status-item {
+  display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+  background: var(--parchment); border-radius: var(--radius-md);
+  border: 1px solid var(--border); flex: 1; min-width: 120px;
+}
+.status-item-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.status-item-value { font-size: 14px; font-weight: 700; line-height: 1; }
+.value-open { color: var(--green-open); }
+.value-high { color: var(--red-closed); }
+.value-medium { color: var(--amber-rush); }
+.value-low { color: var(--green-open); }
+
+/* Darshan table */
+.darshan-table { width: 100%; border-collapse: collapse; }
+.darshan-table th {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-muted); padding: 10px 14px; text-align: left;
+  border-bottom: 1.5px solid var(--border); background: var(--parchment);
+}
+.darshan-table td {
+  padding: 14px 14px; font-size: 13px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.darshan-table tr:last-child td { border-bottom: none; }
+.darshan-table tr:hover td { background: var(--saffron-pale); }
+.price-tag {
+  font-weight: 700; color: var(--saffron);
+  font-family: var(--ff-display); font-size: 16px;
+}
+.avail-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+}
+.avail-yes { background: var(--green-bg); color: var(--green-open); }
+.avail-no { background: var(--red-bg); color: var(--red-closed); }
+.book-btn {
+  background: var(--saffron); color: #fff; border: none; cursor: pointer;
+  padding: 7px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
+  font-family: var(--ff-body); transition: all 0.2s; white-space: nowrap;
+}
+.book-btn:hover { background: var(--maroon); }
+
+/* Sidebar */
+.detail-sidebar { display: flex; flex-direction: column; gap: 20px; }
+.sidebar-map { height: 220px; border-radius: var(--radius-lg); overflow: hidden; }
+.timings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.timing-slot {
+  background: var(--parchment); border-radius: var(--radius-md); padding: 12px;
+  border: 1px solid var(--border);
+}
+.timing-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+.timing-value { font-size: 15px; font-weight: 700; color: var(--text-primary); font-family: var(--ff-display); margin-top: 2px; }
+
+/* ── AI ASSISTANT ── */
+.ai-page { max-width: 1100px; margin: 0 auto; padding: 40px 60px 60px; }
+.ai-hero-banner {
+  background: linear-gradient(135deg, #1A0F08 0%, #3D2010 50%, #5C2A10 100%);
+  border-radius: var(--radius-xl); padding: 40px 48px; margin-bottom: 36px;
+  position: relative; overflow: hidden;
+}
+.ai-hero-pattern {
+  position: absolute; inset: 0; opacity: 0.04;
+  background-image: radial-gradient(circle at 2px 2px, #FFF 1px, transparent 0);
+  background-size: 24px 24px;
+}
+.ai-hero-title {
+  font-family: var(--ff-display); font-size: 40px; font-weight: 700;
+  color: #FDF6EC; line-height: 1.1; position: relative; z-index: 1;
+}
+.ai-hero-title span { color: var(--gold-light); font-style: italic; }
+.ai-hero-sub { font-size: 14px; color: rgba(253,246,236,0.55); margin-top: 10px; position: relative; z-index: 1; }
+
+.ai-tabs { display: flex; gap: 0; background: var(--parchment-dark); border-radius: var(--radius-md); padding: 4px; margin-bottom: 28px; }
+.ai-tab {
+  flex: 1; padding: 10px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+  font-family: var(--ff-body); border: none; cursor: pointer; background: none;
+  color: var(--text-muted); transition: all 0.2s;
+}
+.ai-tab.active { background: var(--saffron); color: #fff; box-shadow: var(--shadow-sm); }
+
+.ai-panel { display: none; }
+.ai-panel.active { display: block; }
+
+.chat-container {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-md);
+}
+.chat-messages {
+  height: 420px; overflow-y: auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+.msg { display: flex; gap: 10px; align-items: flex-start; max-width: 85%; }
+.msg.user { margin-left: auto; flex-direction: row-reverse; }
+.msg-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+}
+.ai-avatar { background: linear-gradient(135deg, var(--saffron), var(--maroon)); color: #fff; }
+.user-avatar { background: var(--gold); color: var(--stone); font-size: 12px; }
+.msg-bubble {
+  padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6;
+  color: var(--text-primary);
+}
+.msg.ai .msg-bubble { background: var(--parchment); border: 1px solid var(--border); border-top-left-radius: 4px; }
+.msg.user .msg-bubble { background: var(--saffron); color: #fff; border-bottom-right-radius: 4px; }
+.msg-typing { display: flex; gap: 4px; align-items: center; padding: 12px 16px; }
+.typing-dot {
+  width: 7px; height: 7px; background: var(--text-muted); border-radius: 50%;
+  animation: typing 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+  0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+.chat-input-row {
+  display: flex; gap: 10px; padding: 16px 24px;
+  border-top: 1px solid var(--border); background: var(--parchment);
+}
+.chat-input {
+  flex: 1; padding: 12px 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  font-size: 14px; font-family: var(--ff-body); color: var(--text-primary);
+  outline: none; transition: border-color 0.2s;
+}
+.chat-input:focus { border-color: var(--saffron); }
+.chat-send-btn {
+  background: var(--saffron); color: #fff; border: none; cursor: pointer;
+  width: 44px; height: 44px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  font-family: var(--ff-body); flex-shrink: 0;
+}
+.chat-send-btn:hover { background: var(--maroon); }
+.quick-prompts { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 24px 0; }
+.quick-prompt {
+  font-size: 12px; padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+  cursor: pointer; background: var(--surface); color: var(--text-secondary);
+  transition: all 0.2s; font-family: var(--ff-body); font-weight: 500;
+}
+.quick-prompt:hover { border-color: var(--saffron); color: var(--saffron); background: var(--saffron-pale); }
+
+/* Temple suggestion cards from AI */
+.ai-suggestion-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+.ai-sug-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden; cursor: pointer;
+  transition: all 0.2s; box-shadow: var(--shadow-sm);
+}
+.ai-sug-card:hover { border-color: var(--saffron); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.ai-sug-img { width: 100%; height: 100px; object-fit: cover; display: block; }
+.ai-sug-body { padding: 10px 12px; }
+.ai-sug-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.ai-sug-reason { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
+
+/* ── TRIP PLANNER ── */
+.planner-form {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: 32px; margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.form-input, .form-select {
+  padding: 12px 16px; background: var(--parchment);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  font-size: 14px; font-family: var(--ff-body); color: var(--text-primary); outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--saffron); }
+.plan-btn {
+  background: var(--saffron); color: #fff; border: none; cursor: pointer;
+  padding: 14px 32px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700;
+  font-family: var(--ff-body); transition: all 0.2s; margin-top: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.plan-btn:hover { background: var(--maroon); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.itinerary-output {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: 32px; display: none;
+  box-shadow: var(--shadow-md);
+}
+.itinerary-output.show { display: block; }
+.itinerary-title {
+  font-family: var(--ff-display); font-size: 28px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 24px;
+}
+.day-block {
+  border-left: 3px solid var(--saffron); padding-left: 20px; margin-bottom: 24px;
+}
+.day-label {
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--saffron); margin-bottom: 8px;
+}
+.day-title { font-family: var(--ff-display); font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; }
+.day-item {
+  display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.day-item:last-child { border-bottom: none; }
+.day-item-time {
+  font-size: 12px; font-weight: 700; color: var(--saffron);
+  min-width: 65px; padding-top: 1px;
+}
+.day-item-detail { font-size: 13px; color: var(--text-primary); line-height: 1.5; }
+.day-item-note { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.loading-ai {
+  display: flex; align-items: center; gap: 12px; padding: 20px;
+  background: var(--parchment); border-radius: var(--radius-md); margin-top: 16px;
+}
+.loading-ai-text { font-size: 14px; color: var(--text-secondary); }
+
+/* ── LOGIN MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(26,15,8,0.7);
+  backdrop-filter: blur(6px); z-index: 2000; display: none;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border-radius: var(--radius-xl);
+  padding: 40px; width: 420px; max-width: 90vw;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+  position: relative; animation: modal-in 0.3s ease;
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
+  border-radius: 50%; border: 1px solid var(--border); background: var(--parchment);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--text-muted); transition: all 0.15s;
+}
+.modal-close:hover { background: var(--saffron); color: #fff; border-color: var(--saffron); }
+.modal-title { font-family: var(--ff-display); font-size: 28px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+.modal-input {
+  width: 100%; padding: 13px 16px; background: var(--parchment);
+  border: 1.5px solid var(--border); border-radius: var(--radius-md);
+  font-size: 14px; font-family: var(--ff-body); color: var(--text-primary);
+  outline: none; margin-bottom: 14px; transition: border-color 0.2s;
+}
+.modal-input:focus { border-color: var(--saffron); }
+.modal-btn {
+  width: 100%; background: var(--saffron); color: #fff; border: none;
+  padding: 14px; border-radius: var(--radius-md); font-size: 15px; font-weight: 700;
+  font-family: var(--ff-body); cursor: pointer; transition: all 0.2s; margin-bottom: 14px;
+}
+.modal-btn:hover { background: var(--maroon); }
+.modal-divider {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  font-size: 12px; color: var(--text-muted);
+}
+.modal-divider::before, .modal-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.modal-google-btn {
+  width: 100%; background: var(--surface); color: var(--text-primary);
+  border: 1.5px solid var(--border); padding: 13px; border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 600; font-family: var(--ff-body); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.2s;
+}
+.modal-google-btn:hover { border-color: var(--saffron); background: var(--saffron-pale); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--stone); color: #FDF6EC; padding: 12px 24px;
+  border-radius: var(--radius-xl); font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lg); z-index: 3000; transition: transform 0.3s ease;
+  display: flex; align-items: center; gap: 8px;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .split-section { grid-template-columns: 1fr; }
+  .split-map-side { height: 300px; position: relative; top: 0; }
+  .detail-body { grid-template-columns: 1fr; padding: 24px; }
+  .temples-grid { grid-template-columns: 1fr; }
+  nav { padding: 0 20px; }
+  .hero-content { padding: 60px 24px 40px; }
+  .ai-page { padding: 24px; }
+  .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand" onclick="showPage('home')">
+    <span>🛕</span>
+    DevDarshan
+    <div class="nav-brand-dot"></div>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('home')">Temples</button>
+    <button class="nav-link" onclick="showPage('ai')">AI Planner</button>
+    <button class="nav-link" onclick="showPage('home')">Char Dham</button>
+    <button class="nav-link" onclick="showPage('home')">Jyotirlingas</button>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button class="nav-link" onclick="document.getElementById('loginModal').classList.add('show')">Sign In</button>
+    <button class="nav-btn" onclick="document.getElementById('loginModal').classList.add('show')">Book Darshan</button>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg-pattern"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-glow-2"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">India's Premier Temple Discovery Platform</div>
+      <h1 class="hero-title">
+        Find Your<br>
+        <em>Sacred Journey</em>
+      </h1>
+      <p class="hero-subtitle">
+        Live darshan status, advance ticket booking & real-time crowd alerts for 500+ divine temples across India.
+      </p>
+      <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="#E8520A" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" class="search-input" id="mainSearch"
+          placeholder="Search temples — Tirupati, Kedarnath, Somnath..."
+          oninput="handleSearch(this.value)" autocomplete="off">
+        <button class="search-btn" onclick="performSearch()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-num">500+</div>
+          <div class="hero-stat-label">Sacred Temples</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">1.2M</div>
+          <div class="hero-stat-label">Daily Devotees</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">28</div>
+          <div class="hero-stat-label">States Covered</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">Live</div>
+          <div class="hero-stat-label">Real-time Status</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED STRIP -->
+  <div class="featured-strip">
+    <div class="featured-strip-title">Live — Popular Temples Right Now</div>
+    <div class="featured-scroll" id="featuredStrip"></div>
+  </div>
+
+  <!-- SPLIT SECTION -->
+  <div class="split-section">
+    <!-- MAP -->
+    <div class="split-map-side">
+      <div id="india-map"></div>
+    </div>
+
+    <!-- TEMPLE LIST -->
+    <div class="split-list-side">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Sacred Temples of India</div>
+          <div class="section-subtitle" id="listSubtitle">Showing all 24 featured temples</div>
+        </div>
+      </div>
+
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="filterCat('all',this)">All Temples</button>
+        <button class="cat-tab" onclick="filterCat('jyotirlinga',this)">12 Jyotirlingas</button>
+        <button class="cat-tab" onclick="filterCat('chardham',this)">Char Dham</button>
+        <button class="cat-tab" onclick="filterCat('shakti',this)">Shakti Peethas</button>
+        <button class="cat-tab" onclick="filterCat('south',this)">South India</button>
+        <button class="cat-tab" onclick="filterCat('divya',this)">Divya Desam</button>
+      </div>
+
+      <div class="temples-grid" id="templesGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PAGE -->
+<div class="page" id="page-detail">
+  <div class="detail-hero" id="detailHero">
+    <img class="detail-hero-img" id="detailImg" src="" alt="">
+    <div class="detail-hero-overlay"></div>
+    <div class="detail-hero-content">
+      <div class="detail-category" id="detailCategory"></div>
+      <h1 class="detail-name" id="detailName"></h1>
+      <div class="detail-location" id="detailLocation">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="detailLocationText"></span>
+      </div>
+    </div>
+  </div>
+  <div class="detail-body">
+    <div class="detail-main">
+      <!-- Status bar -->
+      <div class="info-card">
+        <div class="info-card-title">Live Temple Status</div>
+        <div class="status-bar" id="statusBar"></div>
+      </div>
+      <!-- Darshan types -->
+      <div class="info-card">
+        <div class="info-card-title">Darshan Types & Booking</div>
+        <table class="darshan-table" id="darshanTable"></table>
+      </div>
+      <!-- About -->
+      <div class="info-card">
+        <div class="info-card-title">About This Temple</div>
+        <p id="detailAbout" style="font-size:14px;line-height:1.8;color:var(--text-secondary)"></p>
+      </div>
+    </div>
+    <div class="detail-sidebar">
+      <div class="info-card" style="padding:0;overflow:hidden">
+        <div id="detail-map" class="sidebar-map"></div>
+        <div style="padding:14px 16px">
+          <div style="font-size:13px;font-weight:700;color:var(--text-primary)" id="sidebarName"></div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px" id="sidebarAddress"></div>
+          <a id="directionsLink" href="#" target="_blank"
+            style="display:inline-block;margin-top:10px;font-size:12px;font-weight:700;color:var(--saffron);text-decoration:none">
+            Get Directions →
+          </a>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Temple Timings</div>
+        <div class="timings-grid" id="timingsGrid"></div>
+      </div>
+      <button class="nav-btn" style="width:100%;padding:14px;font-size:15px;border-radius:var(--radius-md)" id="officialBookBtn" onclick="openOfficial()">
+        Book Official Darshan Ticket →
+      </button>
+      <button onclick="showPage('home')" style="width:100%;padding:12px;font-size:13px;border-radius:var(--radius-md);background:none;border:1px solid var(--border);cursor:pointer;color:var(--text-secondary);font-family:var(--ff-body);transition:all 0.2s"
+        onmouseover="this.style.borderColor='var(--saffron)';this.style.color='var(--saffron)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+        ← Back to All Temples
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- AI PAGE -->
+<div class="page" id="page-ai">
+  <div class="ai-page">
+    <div class="ai-hero-banner">
+      <div class="ai-hero-pattern"></div>
+      <h2 class="ai-hero-title">Your <span>Divine</span> AI Guide</h2>
+      <p class="ai-hero-sub">Get personalised temple recommendations & AI-crafted pilgrimage itineraries in seconds</p>
+    </div>
+    <div class="ai-tabs">
+      <button class="ai-tab active" onclick="switchAITab('recommender',this)">Temple Recommender</button>
+      <button class="ai-tab" onclick="switchAITab('planner',this)">Trip Planner</button>
+    </div>
+
+    <!-- RECOMMENDER -->
+    <div class="ai-panel active" id="panel-recommender">
+      <div class="chat-container">
+        <div class="quick-prompts">
+          <button class="quick-prompt" onclick="sendQuickPrompt('Shiva temples in South India')">Shiva temples in South India</button>
+          <button class="quick-prompt" onclick="sendQuickPrompt('Best temples for first time pilgrim')">First-time pilgrim</button>
+          <button class="quick-prompt" onclick="sendQuickPrompt('Temples with easy online booking')">Easy online booking</button>
+          <button class="quick-prompt" onclick="sendQuickPrompt('Devi temples in North India')">Devi temples North India</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="msg ai">
+            <div class="msg-avatar ai-avatar">🛕</div>
+            <div class="msg-bubble">
+              Namaste! I'm your DevDarshan AI guide.<br><br>
+              Tell me about your spiritual preferences — which deity do you seek (Shiva, Vishnu, Devi, Ganesh)? Which region of India? And how many days do you have? I'll curate the perfect darshan journey for you.
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Ask about temples, darshan types, best times to visit..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send-btn" onclick="sendChat()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRIP PLANNER -->
+    <div class="ai-panel" id="panel-planner">
+      <div class="planner-form">
+        <div class="section-title" style="margin-bottom:20px">Plan Your Pilgrimage</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Departure City</label>
+            <input type="text" class="form-input" id="planFrom" placeholder="e.g. Mumbai, Delhi, Hyderabad">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number of Days</label>
+            <select class="form-select" id="planDays">
+              <option>3 Days</option><option>5 Days</option><option selected>7 Days</option>
+              <option>10 Days</option><option>14 Days</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Temple Category</label>
+            <select class="form-select" id="planCategory">
+              <option>Jyotirlinga Circuit</option>
+              <option>Char Dham Yatra</option>
+              <option>South India Temples</option>
+              <option>Shakti Peethas</option>
+              <option>Mixed / Best of India</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Budget (per person)</label>
+            <select class="form-select" id="planBudget">
+              <option>₹5,000 – ₹15,000</option>
+              <option>₹15,000 – ₹30,000</option>
+              <option selected>₹30,000 – ₹60,000</option>
+              <option>₹60,000+</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Travel Month</label>
+            <select class="form-select" id="planMonth">
+              <option>January</option><option>February</option><option>March</option>
+              <option>April</option><option>May</option><option>October</option>
+              <option>November</option><option>December</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Group Size</label>
+            <input type="number" class="form-input" id="planGroup" value="2" min="1" max="50">
+          </div>
+        </div>
+        <button class="plan-btn" onclick="generatePlan()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Generate AI Itinerary
+        </button>
+      </div>
+      <div class="itinerary-output" id="itineraryOutput">
+        <div class="itinerary-title" id="itineraryTitle"></div>
+        <div id="itineraryDays"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('loginModal').classList.remove('show')">✕</button>
+    <div class="modal-title">Welcome Back</div>
+    <div class="modal-sub">Sign in to book darshan tickets & save your pilgrimage plans</div>
+    <input type="text" class="modal-input" placeholder="Phone number or email">
+    <input type="password" class="modal-input" placeholder="Password">
+    <button class="modal-btn" onclick="handleLogin()">Sign In</button>
+    <div class="modal-divider">or continue with</div>
+    <button class="modal-google-btn" onclick="handleLogin()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const temples = [
+  { id:1, name:"Somnath Temple", location:"Somnath, Gujarat", state:"Gujarat", lat:20.8880, lng:70.4015, cat:"jyotirlinga", deity:"Shiva", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Somnath_temple_at_dusk.jpg/800px-Somnath_temple_at_dusk.jpg", status:"open", rush:"high", wait:"90 min", price:150, officialUrl:"https://www.somnath.org", timings:{morning:"6:00 AM – 12:00 PM", evening:"3:00 PM – 10:00 PM", aarti:"7 AM, 12 PM, 7 PM", special:"Mondays"},
+    about:"One of the 12 Jyotirlingas, Somnath is believed to be the first among them and holds immense spiritual significance. Located on the western coast of Gujarat, this temple has been destroyed and rebuilt multiple times, symbolizing eternal resilience. The current structure, built in Chalukyan style, is magnificent.",
+    darshan:[{type:"Free Darshan",price:0,duration:"45 min",avail:true},{type:"Special Darshan",price:150,duration:"20 min",avail:true},{type:"VIP Darshan",price:500,duration:"10 min",avail:false},{type:"Abhishekam",price:1100,duration:"30 min",avail:true}]},
+
+  { id:2, name:"Kedarnath Temple", location:"Kedarnath, Uttarakhand", state:"Uttarakhand", lat:30.7352, lng:79.0669, cat:"jyotirlinga", deity:"Shiva", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Kedarnath_Temple%2C_Rudraprayag_district.jpg/800px-Kedarnath_Temple%2C_Rudraprayag_district.jpg", status:"open", rush:"high", wait:"3 hrs", price:0, officialUrl:"https://badrinath-kedarnath.gov.in", timings:{morning:"4:00 AM – 2:00 PM", evening:"3:00 PM – 9:00 PM", aarti:"5 AM, 6 PM, 7:30 PM", special:"Mahashivratri"},
+    about:"Nestled at 3,583 meters in the Himalayas, Kedarnath is among the holiest Shiva shrines. The temple dates back to the 8th century and is accessible only 6 months a year. The glacial backdrop and the ancient stone temple create an unparalleled spiritual atmosphere.",
+    darshan:[{type:"Free Darshan",price:0,duration:"60 min",avail:true},{type:"VIP Darshan",price:300,duration:"15 min",avail:true},{type:"Abhishekam",price:1500,duration:"45 min",avail:false}]},
+
+  { id:3, name:"Tirupati Balaji (TTD)", location:"Tirupati, Andhra Pradesh", state:"Andhra Pradesh", lat:13.6833, lng:79.3469, cat:"south", deity:"Vishnu", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Tirumala_Temple_Full.jpg/800px-Tirumala_Temple_Full.jpg", status:"open", rush:"very-high", wait:"18 hrs", price:300, officialUrl:"https://ttdsevaonline.com", timings:{morning:"2:30 AM – 1:30 PM", evening:"2:30 PM – 1:00 AM", aarti:"3 AM, 6 AM, 10 AM, 7 PM", special:"Brahmotsavam"},
+    about:"Sri Venkateswara Temple atop Tirumala hill is the world's most visited religious site, receiving over 75,000 pilgrims daily. The Dravidian architecture spans millennia, and the presiding deity — Lord Venkateswara — is considered the most powerful form of Vishnu.",
+    darshan:[{type:"Free Darshan (Sarvadarshan)",price:0,duration:"18 hrs wait",avail:true},{type:"Special Entry Darshan",price:300,duration:"3-4 hrs",avail:true},{type:"Divya Darshan",price:0,duration:"4 hrs wait",avail:true},{type:"Seeghra Darshan",price:3000,duration:"45 min",avail:false},{type:"Abhishekam",price:6000,duration:"60 min",avail:false}]},
+
+  { id:4, name:"Vaishno Devi Temple", location:"Katra, Jammu & Kashmir", state:"J&K", lat:32.9945, lng:74.9489, cat:"shakti", deity:"Devi", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Vaishno_Devi_Bhawan_%28Actual_cave%29.jpg/800px-Vaishno_Devi_Bhawan_%28Actual_cave%29.jpg", status:"open", rush:"medium", wait:"4 hrs", price:100, officialUrl:"https://www.maavaishnodevi.org", timings:{morning:"All night", evening:"All night", aarti:"4 AM, 6 AM, 10 AM, 8 PM", special:"Navratri"},
+    about:"Shri Mata Vaishno Devi Shrine is one of the most revered Hindu shrines in India, located in the Trikuta Mountains of J&K. The 13-km trek from Katra to the cave shrine is a spiritual journey undertaken by over 8 million pilgrims annually.",
+    darshan:[{type:"Free Darshan",price:0,duration:"6 hrs trek",avail:true},{type:"Helicopter Darshan",price:1500,duration:"20 min flight",avail:true},{type:"Priority Darshan Pass",price:100,duration:"2 hrs",avail:false}]},
+
+  { id:5, name:"Rameshwaram Temple", location:"Rameshwaram, Tamil Nadu", state:"Tamil Nadu", lat:9.2885, lng:79.3172, cat:"jyotirlinga", deity:"Shiva", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Ramanathaswamy_Temple%2C_Rameshwaram.jpg/800px-Ramanathaswamy_Temple%2C_Rameshwaram.jpg", status:"open", rush:"medium", wait:"2 hrs", price:50, officialUrl:"https://www.rameswaramtemple.tnhrce.in", timings:{morning:"5:00 AM – 1:00 PM", evening:"3:00 PM – 9:00 PM", aarti:"5 AM, 12 PM, 5 PM, 8 PM", special:"Shivratri"},
+    about:"Rameshwaram, situated on Pamban Island, is one of the Char Dham pilgrimage sites and a Jyotirlinga. The temple is famous for its magnificent corridors — the longest in the world — stretching over 1.2 km. Lord Rama is said to have prayed to Lord Shiva here before crossing to Lanka.",
+    darshan:[{type:"Free Darshan",price:0,duration:"45 min",avail:true},{type:"Special Darshan",price:50,duration:"20 min",avail:true},{type:"Abhishekam",price:500,duration:"30 min",avail:true}]},
+
+  { id:6, name:"Meenakshi Amman Temple", location:"Madurai, Tamil Nadu", state:"Tamil Nadu", lat:9.9195, lng:78.1193, cat:"south", deity:"Devi", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Gopuram_of_Meenakshi_Temple_Madurai.jpg/800px-Gopuram_of_Meenakshi_Temple_Madurai.jpg", status:"open", rush:"medium", wait:"75 min", price:0, officialUrl:"https://www.maduraimeenakshi.org", timings:{morning:"5:00 AM – 12:30 PM", evening:"4:00 PM – 10:00 PM", aarti:"6 AM, 12 PM, 6 PM, 9:30 PM", special:"Chithirai Festival"},
+    about:"The Meenakshi Amman Temple in Madurai is a masterpiece of Dravidian architecture. Dedicated to goddess Meenakshi (Parvati) and her consort Sundareshwarar (Shiva), its 14 gateway towers are adorned with thousands of colorful sculptures.",
+    darshan:[{type:"Free Darshan",price:0,duration:"40 min",avail:true},{type:"Special Darshan",price:50,duration:"15 min",avail:true},{type:"Abhishekam",price:300,duration:"25 min",avail:true}]},
+
+  { id:7, name:"Kashi Vishwanath Temple", location:"Varanasi, Uttar Pradesh", state:"Uttar Pradesh", lat:25.3109, lng:83.0107, cat:"jyotirlinga", deity:"Shiva", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Kashi_Vishwanath_Temple_2.jpg/800px-Kashi_Vishwanath_Temple_2.jpg", status:"open", rush:"high", wait:"2 hrs", price:0, officialUrl:"https://shrikashivishwanath.org", timings:{morning:"3:00 AM – 11:00 PM", evening:"3:00 AM – 11:00 PM", aarti:"3 AM (Mangala), 12 PM, 7 PM (Saptarishi)", special:"Mahashivratri, Mondays"},
+    about:"The Kashi Vishwanath Temple dedicated to Lord Vishwanath is one of the most famous Hindu temples in India. Located in the holy city of Varanasi on the western bank of the Ganga, it is one of the twelve Jyotirlingas. The new Kashi Vishwanath Dham corridor opened in 2021 provides a magnificent complex for devotees.",
+    darshan:[{type:"Free Darshan",price:0,duration:"2 hrs",avail:true},{type:"VIP Pass",price:300,duration:"30 min",avail:true},{type:"Abhishekam Seva",price:551,duration:"30 min",avail:true}]},
+
+  { id:8, name:"Shirdi Sai Baba Temple", location:"Shirdi, Maharashtra", state:"Maharashtra", lat:19.7669, lng:74.4775, cat:"south", deity:"Sai Baba", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Shirdi_Sai_Baba_Temple_2018.jpg/800px-Shirdi_Sai_Baba_Temple_2018.jpg", status:"open", rush:"high", wait:"3 hrs", price:0, officialUrl:"https://www.sai.org.in", timings:{morning:"4:00 AM – 11:30 PM", evening:"4:00 AM – 11:30 PM", aarti:"5 AM, 12 PM, 6 PM, 10 PM", special:"Thursdays"},
+    about:"Shirdi Sai Baba Temple is one of the most visited pilgrimage centres in India, receiving over 25,000 devotees daily. Sai Baba of Shirdi was a spiritual master who taught the unity of all religions. The temple complex houses the samadhi of Sai Baba and various halls for prayer.",
+    darshan:[{type:"Free Darshan",price:0,duration:"3 hrs",avail:true},{type:"Special Darshan",price:300,duration:"1 hr",avail:true},{type:"Kakad Aarti",price:0,duration:"45 min",avail:false}]},
+
+  { id:9, name:"Badrinath Temple", location:"Badrinath, Uttarakhand", state:"Uttarakhand", lat:30.7434, lng:79.4932, cat:"chardham", deity:"Vishnu", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Badrinath_Temple_2007.jpg/800px-Badrinath_Temple_2007.jpg", status:"open", rush:"medium", wait:"90 min", price:0, officialUrl:"https://badrinath-kedarnath.gov.in", timings:{morning:"4:30 AM – 1:00 PM", evening:"3:00 PM – 9:00 PM", aarti:"4:30 AM, 12 PM, 7 PM, 8 PM", special:"Char Dham Season (May–Nov)"},
+    about:"Badrinath temple, nestled in the Garhwal Himalayas at 3,133 meters, is one of the most sacred Hindu temples dedicated to Lord Vishnu. Part of both the Char Dham and the Panch Badri, the temple sits between the Nar and Narayana mountain ranges, with the Alaknanda River flowing in front.",
+    darshan:[{type:"Free Darshan",price:0,duration:"1 hr",avail:true},{type:"Abhishekam",price:1100,duration:"30 min",avail:true}]},
+
+  { id:10, name:"Gangotri Temple", location:"Gangotri, Uttarakhand", state:"Uttarakhand", lat:30.9941, lng:78.9389, cat:"chardham", deity:"Ganga Devi", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Gangotri_Temple.jpg/800px-Gangotri_Temple.jpg", status:"open", rush:"low", wait:"20 min", price:0, officialUrl:"https://badrinath-kedarnath.gov.in", timings:{morning:"6:00 AM – 2:00 PM", evening:"3:00 PM – 9:00 PM", aarti:"7 AM, 12 PM, 6 PM", special:"Akshaya Tritiya"},
+    about:"Gangotri is the origin of River Ganges and one of the Char Dham pilgrimage sites. Located at 3,048 meters in Uttarkashi district, this glacial river's spiritual source is Gaumukh glacier, 19 km from here. The presiding deity is Goddess Ganga.",
+    darshan:[{type:"Free Darshan",price:0,duration:"20 min",avail:true}]},
+
+  { id:11, name:"Mahakaleshwar Ujjain", location:"Ujjain, Madhya Pradesh", state:"Madhya Pradesh", lat:23.1828, lng:75.7682, cat:"jyotirlinga", deity:"Shiva", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Mahakaleshwar_temple_Ujjain.jpg/800px-Mahakaleshwar_temple_Ujjain.jpg", status:"open", rush:"medium", wait:"1.5 hrs", price:0, officialUrl:"https://www.mahakaleshwar.nic.in", timings:{morning:"3:00 AM – 11:00 PM", evening:"3:00 AM – 11:00 PM", aarti:"4 AM (Bhasma Aarti), 12 PM, 8 PM", special:"Bhasma Aarti daily at 4 AM"},
+    about:"Mahakaleshwar Jyotirlinga in Ujjain is one of the most sacred among 12 Jyotirlingas. Unique to this temple is the Bhasma Aarti performed with sacred ash at 4 AM daily — a sight that devotees travel thousands of miles for. Ujjain is also the site of the Kumbh Mela every 12 years.",
+    darshan:[{type:"Free Darshan",price:0,duration:"2 hrs",avail:true},{type:"Bhasma Aarti",price:0,duration:"4 AM only",avail:true},{type:"Special Darshan",price:250,duration:"45 min",avail:true}]},
+
+  { id:12, name:"Siddhivinayak Temple", location:"Mumbai, Maharashtra", state:"Maharashtra", lat:19.0173, lng:72.8302, cat:"south", deity:"Ganesh", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Siddhivinayak_Temple%2C_Mumbai_02.jpg/800px-Siddhivinayak_Temple%2C_Mumbai_02.jpg", status:"open", rush:"high", wait:"2.5 hrs", price:0, officialUrl:"https://www.siddhivinayak.org", timings:{morning:"5:30 AM – 10:00 PM", evening:"5:30 AM – 10:00 PM", aarti:"6 AM, 12 PM, 8:30 PM", special:"Tuesdays, Ganesh Chaturthi"},
+    about:"Shree Siddhivinayak Ganapati Mandir is one of the wealthiest temples in India. The main deity, Lord Siddhivinayak (Ganesh), is believed to be a self-manifested deity. Located in Prabhadevi, Mumbai, it receives over 30,000 devotees on auspicious Tuesdays.",
+    darshan:[{type:"Free Darshan",price:0,duration:"2-3 hrs",avail:true},{type:"Special Entry",price:1500,duration:"30 min",avail:true}]},
+
+  { id:13, name:"Guruvayur Temple", location:"Guruvayur, Kerala", state:"Kerala", lat:10.5935, lng:76.0363, cat:"south", deity:"Vishnu", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Guruvayur_Temple.JPG/800px-Guruvayur_Temple.JPG", status:"open", rush:"medium", wait:"1 hr", price:0, officialUrl:"https://guruvayurdevaswom.in", timings:{morning:"3:00 AM – 1:00 PM", evening:"4:00 PM – 9:30 PM", aarti:"3 AM, 12 PM, 7 PM", special:"Ekadashi"},
+    about:"Guruvayur Sri Krishna Temple is often called the Dwarka of the South. The temple's presiding deity is Lord Guruvayurappan, a form of Vishnu. Only Hindus are permitted inside this temple, which is one of the most visited in Kerala.",
+    darshan:[{type:"Free Darshan",price:0,duration:"1 hr",avail:true},{type:"Special Darshan",price:100,duration:"20 min",avail:true},{type:"Deeparadhana",price:500,duration:"Special timing",avail:true}]},
+
+  { id:14, name:"Omkareshwar Temple", location:"Omkareshwar, Madhya Pradesh", state:"Madhya Pradesh", lat:22.2392, lng:76.1516, cat:"jyotirlinga", deity:"Shiva", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Omkareshwar_temple.JPG/800px-Omkareshwar_temple.JPG", status:"open", rush:"low", wait:"30 min", price:0, officialUrl:"https://www.omkareshwar.org", timings:{morning:"5:00 AM – 12:30 PM", evening:"4:00 PM – 8:30 PM", aarti:"5 AM, 12 PM, 8 PM", special:"Shivratri"},
+    about:"Omkareshwar is one of the 12 Jyotirlingas, located on Mandhata island where the Narmada and Kaveri rivers merge. The island itself is shaped like the Sanskrit symbol OM. The temple complex sits atop a hill and offers stunning views.",
+    darshan:[{type:"Free Darshan",price:0,duration:"30 min",avail:true},{type:"Abhishekam",price:551,duration:"25 min",avail:true}]},
+
+  { id:15, name:"Yamunotri Temple", location:"Yamunotri, Uttarakhand", state:"Uttarakhand", lat:31.0153, lng:78.4609, cat:"chardham", deity:"Yamuna Devi", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Yamunotri_Temple.jpg/800px-Yamunotri_Temple.jpg", status:"open", rush:"low", wait:"15 min", price:0, officialUrl:"https://badrinath-kedarnath.gov.in", timings:{morning:"6:00 AM – 2:00 PM", evening:"3:00 PM – 8:30 PM", aarti:"7 AM, 6 PM", special:"Opening/Closing Ceremonies"},
+    about:"Yamunotri temple, source of the holy Yamuna river, is the westernmost shrine in the Char Dham pilgrimage. Located at 3,293 meters in Uttarkashi district, pilgrims must trek 6 km from Hanuman Chatti. The temple enshrines a black marble idol of Goddess Yamuna.",
+    darshan:[{type:"Free Darshan",price:0,duration:"15 min",avail:true}]},
+
+  { id:16, name:"Padmanabhaswamy Temple", location:"Thiruvananthapuram, Kerala", state:"Kerala", lat:8.4816, lng:76.9462, cat:"south", deity:"Vishnu", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Padmanabhaswami_Temple_%28cropped%29.jpg/800px-Padmanabhaswami_Temple_%28cropped%29.jpg", status:"open", rush:"medium", wait:"1 hr", price:0, officialUrl:"https://www.padmanabhaswamytemple.org", timings:{morning:"3:30 AM – 11:45 AM", evening:"5:00 PM – 7:15 PM", aarti:"3:30 AM, 10 AM, 5 PM", special:"Ekadashi, Onam"},
+    about:"Sri Padmanabhaswamy Temple is one of the 108 Divya Desams dedicated to Vishnu. The temple is famous for its six vaults and enormous treasure. The presiding deity, Lord Padmanabha (Vishnu), is seen in the Anantha Sayanam posture — reclining on the divine serpent Anantha.",
+    darshan:[{type:"Free Darshan",price:0,duration:"1 hr",avail:true},{type:"Daily Seeveli",price:0,duration:"Special timing",avail:true}]},
+];
+
+const currentCat = { val: 'all' };
+let mapInstance = null;
+let detailMapInstance = null;
+let markers = [];
+let currentTemple = null;
+
+// ── UTILS ──
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  window.scrollTo(0, 0);
+  if(page === 'home' && !mapInstance) setTimeout(initMap, 100);
+  if(page === 'home' && mapInstance) setTimeout(() => mapInstance.invalidateSize(), 100);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = '✓ ' + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── MAP ──
+function initMap() {
+  if(mapInstance) return;
+  mapInstance = L.map('india-map', {
+    center: [22.5, 82.5], zoom: 5,
+    zoomControl: true, scrollWheelZoom: false,
+    attributionControl: false
+  });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18, attribution: '© OSM'
+  }).addTo(mapInstance);
+  renderMarkers(temples);
+}
+
+function renderMarkers(list) {
+  if(!mapInstance) return;
+  markers.forEach(m => mapInstance.removeLayer(m));
+  markers = [];
+  list.forEach(t => {
+    const icon = L.divIcon({
+      html: `<div style="background:${t.status==='open'?'#E8520A':'#C02020'};width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+      className: '', iconSize: [12, 12], iconAnchor: [6, 6]
+    });
+    const m = L.marker([t.lat, t.lng], {icon}).addTo(mapInstance);
+    m.bindPopup(`<div style="font-family:DM Sans,sans-serif;min-width:160px"><b style="font-size:13px">${t.name}</b><br><span style="font-size:11px;color:#666">${t.location}</span><br><span style="font-size:11px;background:${t.status==='open'?'#E6F5EE':'#FEECEC'};color:${t.status==='open'?'#1A7A4A':'#C02020'};padding:2px 8px;border-radius:10px;font-weight:700;display:inline-block;margin-top:4px;text-transform:uppercase">${t.status}</span></div>`, {maxWidth: 200});
+    m.on('click', () => openDetail(t));
+    markers.push(m);
+  });
+}
+
+function flyTo(temple) {
+  if(!mapInstance) return;
+  mapInstance.flyTo([temple.lat, temple.lng], 9, {duration: 1.5});
+}
+
+// ── RENDER TEMPLES GRID ──
+function renderGrid(list) {
+  const grid = document.getElementById('templesGrid');
+  const subtitle = document.getElementById('listSubtitle');
+  subtitle.textContent = `Showing ${list.length} temple${list.length!==1?'s':''}`;
+  grid.innerHTML = list.map(t => `
+    <div class="temple-card" onclick="openDetail(temples.find(x=>x.id===${t.id}))">
+      <img class="temple-card-img" src="${t.img}" alt="${t.name}" onerror="this.style.background='#F5E8D4';this.src=''" loading="lazy">
+      <div class="temple-card-body">
+        <div class="temple-card-name">${t.name}</div>
+        <div class="temple-card-loc">${t.location}</div>
+        <div class="temple-card-footer">
+          <div class="status-pill ${t.status==='open'?'pill-open':'pill-closed'}">
+            <div class="dot"></div>
+            ${t.status.toUpperCase()}
+          </div>
+          <span class="rush-badge ${t.rush==='high'||t.rush==='very-high'?'rush-high':t.rush==='medium'?'rush-medium':'rush-low'}">
+            ${t.rush==='very-high'?'VERY HIGH':t.rush.toUpperCase()} RUSH
+          </span>
+        </div>
+        ${t.price>0?`<div class="temple-card-price">From <strong>₹${t.price}</strong> special darshan</div>`:`<div class="temple-card-price"><strong style="color:var(--green-open)">Free</strong> darshan available</div>`}
+      </div>
+    </div>`).join('');
+}
+
+function filterCat(cat, btn) {
+  currentCat.val = cat;
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat === 'all' ? temples : temples.filter(t => t.cat === cat);
+  renderGrid(filtered);
+  renderMarkers(filtered);
+  if(filtered.length > 0 && mapInstance) {
+    const bounds = L.latLngBounds(filtered.map(t => [t.lat, t.lng]));
+    mapInstance.fitBounds(bounds, {padding: [40,40]});
+  }
+}
+
+// ── FEATURED STRIP ──
+function renderFeatured() {
+  const strip = document.getElementById('featuredStrip');
+  const top8 = temples.slice(0, 10);
+  strip.innerHTML = top8.map(t => `
+    <div class="featured-chip" onclick="openDetail(t)" data-id="${t.id}">
+      <img class="featured-chip-img" src="${t.img}" alt="${t.name}" onerror="this.style.background='rgba(255,255,255,0.1)'" loading="lazy">
+      <div>
+        <div class="featured-chip-name">${t.name.split(' ').slice(0,3).join(' ')}</div>
+        <div class="featured-chip-state">${t.state}</div>
+      </div>
+      <div class="live-dot"></div>
+    </div>`).join('');
+  strip.querySelectorAll('.featured-chip').forEach((chip, i) => {
+    chip.addEventListener('click', () => openDetail(top8[i]));
+  });
+}
+
+// ── SEARCH ──
+function handleSearch(val) {
+  const dd = document.getElementById('searchDropdown');
+  if(!val.trim()) { dd.classList.remove('show'); return; }
+  const res = temples.filter(t =>
+    t.name.toLowerCase().includes(val.toLowerCase()) ||
+    t.location.toLowerCase().includes(val.toLowerCase()) ||
+    t.deity.toLowerCase().includes(val.toLowerCase()) ||
+    t.state.toLowerCase().includes(val.toLowerCase())
+  ).slice(0, 6);
+  if(!res.length) { dd.classList.remove('show'); return; }
+  dd.innerHTML = res.map(t => `
+    <div class="search-result-item" onclick="openDetail(temples.find(x=>x.id===${t.id}))">
+      <img class="search-result-img" src="${t.img}" alt="${t.name}" onerror="this.style.background='#F5E8D4'" loading="lazy">
+      <div>
+        <div class="search-result-name">${t.name}</div>
+        <div class="search-result-loc">${t.location} · ${t.deity}</div>
+      </div>
+      <span class="search-result-badge ${t.status==='open'?'badge-open':'badge-closed'}">${t.status.toUpperCase()}</span>
+    </div>`).join('');
+  dd.classList.add('show');
+}
+
+function performSearch() {
+  const val = document.getElementById('mainSearch').value;
+  const res = temples.filter(t => t.name.toLowerCase().includes(val.toLowerCase()) || t.location.toLowerCase().includes(val.toLowerCase()));
+  if(res.length === 1) openDetail(res[0]);
+  else if(res.length > 1) { renderGrid(res); renderMarkers(res); document.getElementById('searchDropdown').classList.remove('show'); }
+}
+
+document.addEventListener('click', e => {
+  if(!e.target.closest('.search-wrapper')) document.getElementById('searchDropdown').classList.remove('show');
+});
+
+// ── DETAIL PAGE ──
+function openDetail(temple) {
+  if(!temple) return;
+  currentTemple = temple;
+  document.getElementById('searchDropdown').classList.remove('show');
+  document.getElementById('detailImg').src = temple.img;
+  document.getElementById('detailCategory').textContent = ({jyotirlinga:'12 Jyotirlingas',chardham:'Char Dham',shakti:'Shakti Peetha',south:'South India',divya:'Divya Desam'}[temple.cat]||'Sacred Temple') + ' · ' + temple.deity;
+  document.getElementById('detailName').textContent = temple.name;
+  document.getElementById('detailLocationText').textContent = temple.location;
+  document.getElementById('sidebarName').textContent = temple.name;
+  document.getElementById('sidebarAddress').textContent = temple.location;
+  document.getElementById('directionsLink').href = `https://www.google.com/maps?q=${temple.lat},${temple.lng}`;
+  document.getElementById('detailAbout').textContent = temple.about;
+
+  // Status bar
+  const rushColor = temple.rush==='high'||temple.rush==='very-high'?'value-high':temple.rush==='medium'?'value-medium':'value-low';
+  document.getElementById('statusBar').innerHTML = `
+    <div class="status-item"><div><div class="status-item-label">Temple Status</div><div class="status-item-value value-${temple.status}">${temple.status==='open'?'OPEN':'CLOSED'}</div></div></div>
+    <div class="status-item"><div><div class="status-item-label">Current Rush</div><div class="status-item-value ${rushColor}">${temple.rush.toUpperCase()}</div></div></div>
+    <div class="status-item"><div><div class="status-item-label">Wait Time</div><div class="status-item-value">${temple.wait}</div></div></div>
+    <div class="status-item"><div><div class="status-item-label">Last Updated</div><div class="status-item-value" style="font-size:12px;font-weight:500;color:var(--text-muted)">2 mins ago</div></div></div>`;
+
+  // Darshan table
+  document.getElementById('darshanTable').innerHTML = `
+    <thead><tr><th>Darshan Type</th><th>Price</th><th>Duration</th><th>Availability</th><th>Book</th></tr></thead>
+    <tbody>${temple.darshan.map(d => `
+      <tr>
+        <td style="font-weight:600">${d.type}</td>
+        <td><span class="price-tag">${d.price===0?'Free':'₹'+d.price}</span></td>
+        <td style="color:var(--text-muted)">${d.duration}</td>
+        <td><span class="avail-badge ${d.avail?'avail-yes':'avail-no'}">${d.avail?'Available':'Full'}</span></td>
+        <td>${d.avail?`<button class="book-btn" onclick="window.open('${temple.officialUrl}','_blank')">Book →</button>`:'-'}</td>
+      </tr>`).join('')}</tbody>`;
+
+  // Timings
+  document.getElementById('timingsGrid').innerHTML = `
+    <div class="timing-slot"><div class="timing-label">Morning</div><div class="timing-value">${temple.timings.morning}</div></div>
+    <div class="timing-slot"><div class="timing-label">Evening</div><div class="timing-value">${temple.timings.evening}</div></div>
+    <div class="timing-slot" style="grid-column:1/-1"><div class="timing-label">Aarti Timings</div><div class="timing-value" style="font-size:13px">${temple.timings.aarti}</div></div>
+    <div class="timing-slot" style="grid-column:1/-1"><div class="timing-label">Special Days</div><div class="timing-value" style="font-size:13px">${temple.timings.special}</div></div>`;
+
+  showPage('detail');
+
+  // Detail mini-map
+  setTimeout(() => {
+    if(detailMapInstance) {
+      detailMapInstance.remove(); detailMapInstance = null;
+    }
+    detailMapInstance = L.map('detail-map', {
+      center: [temple.lat, temple.lng], zoom: 13,
+      zoomControl: false, dragging: false, scrollWheelZoom: false,
+      attributionControl: false
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(detailMapInstance);
+    const pin = L.divIcon({
+      html: `<div style="background:#E8520A;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,0.3)"></div>`,
+      className:'', iconSize:[16,16], iconAnchor:[8,8]
+    });
+    L.marker([temple.lat, temple.lng], {icon:pin}).addTo(detailMapInstance);
+    if(mapInstance) flyTo(temple);
+  }, 200);
+}
+
+function openOfficial() {
+  if(currentTemple) window.open(currentTemple.officialUrl, '_blank');
+}
+
+// ── AI CHAT ──
+const chatHistory = [
+  {role:'assistant', content:'Namaste! I\'m your DevDarshan AI guide.\n\nTell me about your spiritual preferences — which deity do you seek (Shiva, Vishnu, Devi, Ganesh)? Which region of India? And how many days do you have? I\'ll curate the perfect darshan journey for you.'}
+];
+
+function switchAITab(tab, btn) {
+  document.querySelectorAll('.ai-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.ai-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function addMsg(role, content) {
+  const msgs = document.getElementById('chatMessages');
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = `
+    <div class="msg-avatar ${isUser?'user-avatar':'ai-avatar'}">${isUser?'You':'🛕'}</div>
+    <div class="msg-bubble">${content.replace(/\n/g,'<br>')}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg ai'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-avatar ai-avatar">🛕</div><div class="msg-bubble"><div class="msg-typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if(t) t.remove();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const val = input.value.trim();
+  if(!val) return;
+  input.value = '';
+  addMsg('user', val);
+  chatHistory.push({role:'user', content:val});
+  addTyping();
+
+  try {
+    const sys = `You are DevDarshan's AI temple guide — a knowledgeable, warm, and spiritually attuned assistant for Hindu pilgrimage planning in India. You help users find temples based on their deity preference, region, available time, and spiritual goals.
+
+Known temples in the system: ${temples.map(t=>`${t.name} (${t.location}, ${t.deity}, ${t.cat})`).join('; ')}
+
+When recommending temples, mention name, location, why it's special, best darshan type, and suggest booking in advance for crowded ones. Keep responses conversational and inspiring. Use 2-3 paragraphs max. If user asks for suggestions, give 3 specific temples with brief reasons.`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: sys,
+        messages: chatHistory.map(m => ({role:m.role, content:m.content}))
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || "I'm having trouble connecting right now. Please try again.";
+    removeTyping();
+    addMsg('assistant', reply);
+    chatHistory.push({role:'assistant', content:reply});
+  } catch(e) {
+    removeTyping();
+    const reply = "I'm unable to connect to the AI service at the moment. Based on your query, I'd suggest exploring Kedarnath for Shiva devotees, Tirupati Balaji for Vishnu, or Vaishno Devi for Devi worship — all with excellent online booking portals.";
+    addMsg('assistant', reply);
+    chatHistory.push({role:'assistant', content:reply});
+  }
+}
+
+function sendQuickPrompt(prompt) {
+  document.getElementById('chatInput').value = prompt;
+  sendChat();
+}
+
+// ── TRIP PLANNER ──
+async function generatePlan() {
+  const from = document.getElementById('planFrom').value || 'Delhi';
+  const days = document.getElementById('planDays').value;
+  const cat = document.getElementById('planCategory').value;
+  const budget = document.getElementById('planBudget').value;
+  const month = document.getElementById('planMonth').value;
+  const group = document.getElementById('planGroup').value;
+  const output = document.getElementById('itineraryOutput');
+  const btn = document.querySelector('.plan-btn');
+  btn.disabled = true; btn.textContent = 'Generating...';
+
+  try {
+    const prompt = `Create a detailed ${days} pilgrimage itinerary for ${group} person(s) departing from ${from}, focusing on ${cat}. Budget: ${budget} per person. Month: ${month}.
+
+Return a JSON object like:
+{
+  "title": "Itinerary Title",
+  "summary": "2 sentence overview",
+  "days": [
+    {
+      "day": 1,
+      "title": "Day title",
+      "items": [
+        {"time": "6:00 AM", "activity": "Activity name", "note": "Brief helpful tip"}
+      ]
+    }
+  ]
+}
+Return ONLY valid JSON. No markdown.`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{role:'user', content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '{}';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const plan = JSON.parse(clean);
+
+    document.getElementById('itineraryTitle').textContent = plan.title || 'Your Pilgrimage Itinerary';
+    document.getElementById('itineraryDays').innerHTML = plan.days.map(d => `
+      <div class="day-block">
+        <div class="day-label">Day ${d.day}</div>
+        <div class="day-title">${d.title}</div>
+        ${d.items.map(i => `
+          <div class="day-item">
+            <div class="day-item-time">${i.time}</div>
+            <div>
+              <div class="day-item-detail">${i.activity}</div>
+              <div class="day-item-note">${i.note}</div>
+            </div>
+          </div>`).join('')}
+      </div>`).join('');
+    output.classList.add('show');
+    output.scrollIntoView({behavior:'smooth', block:'nearest'});
+  } catch(e) {
+    // Fallback itinerary
+    document.getElementById('itineraryTitle').textContent = `${days} ${cat} — ${from} Departure`;
+    document.getElementById('itineraryDays').innerHTML = `
+      <div class="day-block">
+        <div class="day-label">Day 1</div>
+        <div class="day-title">Arrival & First Darshan</div>
+        <div class="day-item"><div class="day-item-time">6:00 AM</div><div><div class="day-item-detail">Depart from ${from}</div><div class="day-item-note">Book train or flight in advance for ${month}</div></div></div>
+        <div class="day-item"><div class="day-item-time">2:00 PM</div><div><div class="day-item-detail">Check in at dharamshala near temple</div><div class="day-item-note">Book accommodation 30 days in advance for peak season</div></div></div>
+        <div class="day-item"><div class="day-item-time">5:00 PM</div><div><div class="day-item-detail">Evening Aarti darshan</div><div class="day-item-note">Most auspicious time — reach 1 hr early</div></div></div>
+      </div>
+      <div class="day-block">
+        <div class="day-label">Day 2</div>
+        <div class="day-title">Main Temple Darshan</div>
+        <div class="day-item"><div class="day-item-time">4:30 AM</div><div><div class="day-item-detail">Morning Abhishekam / Special Darshan</div><div class="day-item-note">Pre-book online for ₹150–₹500 to skip queues</div></div></div>
+        <div class="day-item"><div class="day-item-time">10:00 AM</div><div><div class="day-item-detail">Explore temple surroundings and local ghats</div><div class="day-item-note">Hire a local pujari-guide for ₹300</div></div></div>
+      </div>`;
+    output.classList.add('show');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Generate AI Itinerary';
+}
+
+// ── AUTH ──
+function handleLogin() {
+  document.getElementById('loginModal').classList.remove('show');
+  showToast('Welcome back! Logged in successfully.');
+}
+
+// ── NAV AI BUTTON ──
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', function() {
+    if(this.textContent.trim() === 'AI Planner') showPage('ai');
+  });
+});
+
+// ── INIT ──
+renderGrid(temples);
+renderFeatured();
+setTimeout(initMap, 500);
+</script>
+</body>
+</html>
