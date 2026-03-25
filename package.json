@@ -1,7 +1,0 @@
-{
-  "name": "dev-darshan-root",
-  "version": "1.0.0",
-  "scripts": {
-    "build": "mkdir -p public && cp -r frontend/www/* public/"
-  }
-}
