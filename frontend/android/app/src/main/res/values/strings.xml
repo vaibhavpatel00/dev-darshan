@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DevDarshan</string>
+    <string name="title_activity_main">DevDarshan</string>
+    <string name="package_name">com.devdarshan.app</string>
+    <string name="custom_url_scheme">com.devdarshan.app</string>
+</resources>
