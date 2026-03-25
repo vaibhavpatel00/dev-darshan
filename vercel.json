@@ -1,9 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/www/$1"
-    }
-  ],
-  "cleanUrls": true
-}
